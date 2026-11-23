@@ -509,6 +509,110 @@ def get_saved_discoveries():
         raise HTTPException(status_code=500, detail="Could not load saved discoveries") from exc
 
 
+@app.get("/api/discovery/{discovery_id}")
+def get_saved_discovery_detail(discovery_id: int):
+    try:
+        saved = get_discovery(discovery_id)
+    except Exception as exc:
+        print("Discovery detail error:", repr(exc))
+        raise HTTPException(
+            status_code=500,
+            detail="Could not load saved discovery"
+        ) from exc
+
+    if saved is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Discovery not found"
+        )
+
+    innovation = saved.get("innovation") or {}
+    if not isinstance(innovation, dict):
+        innovation = {}
+
+    title = (
+        innovation.get("innovation_title")
+        or saved.get("title")
+        or "Untitled innovation"
+    )
+
+    solution = {
+        "name": title,
+        "description": innovation.get("proposed_solution", ""),
+        "working_principle": innovation.get("working_principle", ""),
+        "implementation_steps": innovation.get("implementation_steps", []),
+        "limitations": innovation.get("limitations", []),
+        "validation_plan": innovation.get("validation_plan", []),
+    }
+
+    return {
+        "id": saved["id"],
+        "title": saved["title"],
+        "problem": saved["problem"],
+        "created_at": saved["created_at"],
+        "model_used": saved["model_used"],
+        "innovation": innovation,
+        "mechanisms": saved.get("mechanisms", []),
+        "solutions": [solution],
+        "research": {},
+        "scientific_verification": "pending",
+    }
+
+
+@app.post("/api/find-research")
+def find_supporting_research(request: dict):
+    from .research_service import search_scientific_papers
+
+    try:
+        discovery_id = int(request.get("discovery_id"))
+        solution_index = int(request.get("solution_index", 0))
+    except (TypeError, ValueError):
+        raise HTTPException(
+            status_code=422,
+            detail="Invalid discovery ID or solution index"
+        )
+
+    if solution_index != 0:
+        raise HTTPException(
+            status_code=422,
+            detail="This discovery has only one saved solution"
+        )
+
+    saved = get_discovery(discovery_id)
+
+    if saved is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Discovery not found"
+        )
+
+    innovation = saved.get("innovation") or {}
+
+    if not isinstance(innovation, dict):
+        innovation = {}
+
+    title = str(
+        innovation.get("innovation_title")
+        or saved.get("title")
+        or ""
+    ).strip()
+
+    problem = str(saved.get("problem") or "").strip()
+
+    query = title[:180] or problem[:180]
+
+    if not query:
+        raise HTTPException(
+            status_code=422,
+            detail="No research query available"
+        )
+
+    return search_scientific_papers(
+        query=query,
+        limit=5
+    )
+
+
 def build_discovery_graph(saved):
     innovation = saved.get("innovation") or {}
     mechanisms = saved.get("mechanisms") or []

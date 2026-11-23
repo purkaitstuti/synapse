@@ -14,9 +14,47 @@ export default function Research() {
   const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    if (!did) return;
-    setDetail(null); setMsg("");
-    fetch(`/api/discovery/${did}`).then((r) => r.json()).then((d) => { setDetail(d); setRes(d.research ?? {}); });
+    const controller = new AbortController();
+
+    setDetail(null);
+    setRes({});
+    setMsg("");
+
+    if (!did) return () => controller.abort();
+
+    async function loadDiscovery() {
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/api/discovery/${did}`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) {
+          throw new Error(
+            `Failed to load discovery (${response.status})`
+          );
+        }
+
+        const data = await response.json();
+
+        if (!controller.signal.aborted) {
+          setDetail(data);
+          setRes(data.research ?? {});
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) {
+          setMsg(
+            error instanceof Error
+              ? error.message
+              : "Unable to load saved discovery."
+          );
+        }
+      }
+    }
+
+    void loadDiscovery();
+
+    return () => controller.abort();
   }, [did]);
 
   async function find(i: number) {

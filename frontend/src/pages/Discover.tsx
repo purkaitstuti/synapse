@@ -493,9 +493,24 @@ export default function Discover() {
                     {item.rank}. {item.mechanism_name}
                   </h3>
 
-                  <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
-                    {Number(item.similarity).toFixed(3)}
-                  </span>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <span className="rounded-full bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300">
+                      {Number(item.similarity).toFixed(3)}
+                    </span>
+                    <span className={`rounded-full px-3 py-1 text-xs ${
+                      Number(item.similarity) >= 0.5
+                        ? "bg-emerald-500/10 text-emerald-300"
+                        : Number(item.similarity) >= 0.4
+                          ? "bg-amber-500/10 text-amber-300"
+                          : "bg-slate-700 text-slate-300"
+                    }`}>
+                      {Number(item.similarity) >= 0.5
+                        ? "Higher similarity"
+                        : Number(item.similarity) >= 0.4
+                          ? "Moderate similarity"
+                          : "Lower similarity"}
+                    </span>
+                  </div>
                 </div>
 
                 <p className="text-xs uppercase tracking-wide text-cyan-400">

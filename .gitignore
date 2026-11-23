@@ -28,3 +28,22 @@ Thumbs.db
 
 # Logs
 *.log
+
+# SYNAPSE generated files and local environments
+.venv-ai/
+backend/data/
+backend/models/
+backend/indexes/
+backend/checkpoints/
+*.faiss
+*.joblib
+*.pkl
+*.pt
+*.pth
+*.onnx
+*.npy
+*.npz
+*.tsv
+*_backup_before_*.py
+*_backup_before_*.tsx
+*_before_*.tsx.bak
